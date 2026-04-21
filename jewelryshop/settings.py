@@ -9,12 +9,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-3%y3laftm62q0zaj+s7#p-xqq9(&#q+)s8)p-&#&bz*0$!xu$0'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-change-this-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', '*').split(',') if host.strip()]
 
 
 # Application definition
@@ -33,6 +33,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -114,6 +115,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'jewelryshop/static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'static') # Automatically Created on Production
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Settings for Media
 MEDIA_URL = '/media/'
@@ -124,12 +126,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'dhrumilchauhan2005@gmail.com'
-EMAIL_HOST_PASSWORD = 'zgsz vobo vnuw dwvs'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'prashantmishra7649@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'rkjv rwye lmop zjtl')
 
 JAZZMIN_SETTINGS = {
     "site_title": "Jewellery Admin",
@@ -139,3 +141,8 @@ JAZZMIN_SETTINGS = {
     "copyright": "Jewellery © 2025",
     "theme": "darkly",
 }
+
+# Razorpay Configuration
+RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID', '')
+RAZORPAY_SECRET_KEY = os.getenv('RAZORPAY_SECRET_KEY', '')
+RAZORPAY_CURRENCY = 'INR'

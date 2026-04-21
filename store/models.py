@@ -88,20 +88,41 @@ class Order(models.Model):
         max_length=50,
         default="Pending"
         )
+    # Payment fields
+    payment_status = models.BooleanField(default=False, verbose_name="Payment Status")
+    razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
+    razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    razorpay_signature = models.CharField(max_length=100, blank=True, null=True)
+    
+    class Meta:
+        ordering = ('-ordered_date',)
+    
+    def __str__(self):
+        return f"Order {self.id} - {self.user.username}"
+    
+    @property
+    def order_total(self):
+        return self.quantity * self.product.price
 
 class Payment(models.Model):
     name = models.CharField(max_length=100)
-    phone =models.CharField(max_length=10,null=True)
-    email = models.EmailField(max_length=25)
+    phone = models.CharField(max_length=10, null=True)
+    email = models.EmailField(max_length=100)
     modelselection = models.CharField(max_length=20)
-    amount = models.CharField(max_length=5)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
     message = models.TextField()
     order_id = models.CharField(max_length=100, blank=True)
     paid = models.BooleanField(default=False)
     razorpay_payment_id = models.CharField(max_length=100, blank=True)
+    razorpay_order_id = models.CharField(max_length=100, blank=True)
+    razorpay_signature = models.CharField(max_length=100, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ('-updated_at',)
  
-    def _str_(self):
-        if self.paid == True:
-            return self.name + " paid"
+    def __str__(self):
+        if self.paid:
+            return f"{self.name} - Paid"
         else:
-            return self.name + " not paid"
+            return f"{self.name} - Pending"

@@ -1,24 +1,227 @@
-{% if razorpay_payment %}
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
 
-<form method="POST" action="{% url 'payment_status' %}">
-  {% csrf_token %}
-  <script
-    src="https://checkout.razorpay.com/v1/checkout.js"
-    data-key="rzp_test_VQhEfe2NCXbbwI"
-    data-amount="{{ razorpay_payment.amount }}"
-    data-currency="INR"
-    data-order_id="{{ razorpay_payment.order_id }}"
-    data-buttontext="Pay with Razorpay"
-    data-name="Arc"
-    data-description="A Wild Sheep Chase is the third novel by Japanese author Haruki Murakami"
-    data-image="https://example.com/your_logo.jpg"
-    data-prefill.name="{{ razorpay_payment.name }}"
-    data-prefill.email="gaurav.kumar@example.com"
-    data-theme.color="#F37254"
-  ></script>
+{% block content %}
 
-  <input type="hidden" custom="Hidden Element" name="hidden" />
-</form>
- 
+<div class="container py-5">
+  <!-- HERO SECTION -->
+  <section class="py-5 bg-light">
+    <div class="container">
+      <div class="row px-4 px-lg-5 py-lg-4 align-items-center">
+        <div class="col-lg-6">
+          <h1 class="h2 text-uppercase mb-0">Secure Payment</h1>
+        </div>
+        <div class="col-lg-6 text-lg-right">
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-lg-end mb-0 px-0">
+              <li class="breadcrumb-item"><a href="{% url 'store:home' %}">Home</a></li>
+              <li class="breadcrumb-item"><a href="{% url 'store:cart' %}">Cart</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Payment</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </section>
 
-{% endif %}
+  <!-- PAYMENT SECTION -->
+  <section class="py-5">
+    <div class="row">
+      <!-- Left Column: Order Summary -->
+      <div class="col-lg-8">
+        <div class="card border-0 rounded-0 mb-4">
+          <div class="card-header bg-light border-0">
+            <h5 class="text-uppercase mb-0">Order Summary</h5>
+          </div>
+          <div class="card-body">
+            {% include 'partials/_messages.html' %}
+            
+            <!-- Cart Items -->
+            <table class="table table-sm mb-4">
+              <thead class="bg-light">
+                <tr>
+                  <th class="border-0" scope="col"><strong class="text-small text-uppercase">Product</strong></th>
+                  <th class="border-0" scope="col"><strong class="text-small text-uppercase">Quantity</strong></th>
+                  <th class="border-0" scope="col"><strong class="text-small text-uppercase">Price</strong></th>
+                  <th class="border-0" scope="col"><strong class="text-small text-uppercase">Total</strong></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in cart_items %}
+                <tr>
+                  <td class="border-0">
+                    <div class="media align-items-center">
+                      {% if item.product.product_image %}
+                        <img src="{{item.product.product_image.url}}" alt="{{item.product.title}}" width="50" class="mr-3">
+                      {% else %}
+                        <img src="{% static 'img/product-detail-3.jpg' %}" alt="{{item.product.title}}" width="50" class="mr-3">
+                      {% endif %}
+                      <div class="media-body">
+                        <strong>{{item.product.title}}</strong>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="border-0">{{item.quantity}}</td>
+                  <td class="border-0">${{item.product.price|intcomma}}</td>
+                  <td class="border-0"><strong>${{item.total_price|intcomma}}</strong></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+
+            <!-- Shipping Address -->
+            <div class="border-top pt-4">
+              <h6 class="text-uppercase mb-3">Delivery Address</h6>
+              <p class="mb-2">
+                <strong>{{address.locality}}</strong><br>
+                {{address.city}}, {{address.state}}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Payment Details -->
+      <div class="col-lg-4">
+        <div class="card border-0 rounded-0 p-lg-4 bg-light">
+          <div class="card-body">
+            <h5 class="text-uppercase mb-4">Payment Details</h5>
+            
+            <!-- Order Summary -->
+            <div class="mb-4">
+              <ul class="list-unstyled">
+                <li class="d-flex align-items-center justify-content-between mb-3">
+                  <span class="text-uppercase small">Subtotal:</span>
+                  <span id="subtotal">${{total_amount|intcomma}}</span>
+                </li>
+                <li class="border-bottom my-3"></li>
+                <li class="d-flex align-items-center justify-content-between mb-3">
+                  <strong class="text-uppercase small">Total Amount:</strong>
+                  <strong class="h6" id="final-amount">${{total_amount|intcomma}}</strong>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="mb-4">
+              <h6 class="text-uppercase mb-3">Payment Method</h6>
+              <div class="alert alert-info" role="alert">
+                <i class="fas fa-lock mr-2"></i>
+                <strong>Secure Payment</strong><br>
+                <small>Powered by Razorpay</small>
+              </div>
+            </div>
+
+            <!-- Razorpay Button -->
+            <div class="mb-4">
+              <button id="rzp-button1" class="btn btn-primary btn-lg btn-block">
+                <i class="fas fa-lock mr-2"></i>Pay with Razorpay
+              </button>
+            </div>
+
+            <!-- Secure Badge -->
+            <div class="text-center">
+              <small class="text-muted">
+                <i class="fas fa-shield-alt mr-1"></i>
+                Your payment information is secured with SSL encryption
+              </small>
+            </div>
+
+            <!-- Cancel Button -->
+            <a href="{% url 'store:cart' %}" class="btn btn-outline-secondary btn-block mt-3">
+              <i class="fas fa-arrow-left mr-2"></i>Back to Cart
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Razorpay Checkout Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+  var options = {
+    "key": "{{ razorpay_key }}",
+    "amount": {{ amount }},
+    "currency": "{{ currency }}",
+    "name": "Jewelry Shop",
+    "description": "Order Payment",
+    "order_id": "{{ razorpay_order_id }}",
+    "prefill": {
+      "name": "{{ user_name }}",
+      "email": "{{ user_email }}",
+      "contact": "{{ user_phone }}"
+    },
+    "handler": function (response) {
+      handlePaymentSuccess(response);
+    },
+    "modal": {
+      "ondismiss": function () {
+        handlePaymentFailure();
+      }
+    },
+    "theme": {
+      "color": "#3399cc"
+    }
+  };
+
+  var rzp1 = new Razorpay(options);
+
+  document.getElementById('rzp-button1').onclick = function (e) {
+    e.preventDefault();
+    rzp1.open();
+  }
+
+  function handlePaymentSuccess(response) {
+    // Show loading message
+    document.getElementById('rzp-button1').disabled = true;
+    document.getElementById('rzp-button1').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+
+    // Send verification request to backend
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '{% url "store:payment-verify" %}', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+
+    var data = {
+      'razorpay_order_id': response.razorpay_order_id,
+      'razorpay_payment_id': response.razorpay_payment_id,
+      'razorpay_signature': response.razorpay_signature
+    };
+
+    xhr.onload = function () {
+      if (xhr.status === 200) {
+        var result = JSON.parse(xhr.responseText);
+        if (result.success) {
+          // Redirect to orders page
+          window.location.href = result.redirect_url;
+        } else {
+          alert('Payment verification failed: ' + result.error);
+          handlePaymentFailure();
+        }
+      } else {
+        var result = JSON.parse(xhr.responseText);
+        alert('Error: ' + result.error);
+        handlePaymentFailure();
+      }
+    };
+
+    xhr.onerror = function () {
+      alert('Error processing payment');
+      handlePaymentFailure();
+    };
+
+    xhr.send(JSON.stringify(data));
+  }
+
+  function handlePaymentFailure() {
+    document.getElementById('rzp-button1').disabled = false;
+    document.getElementById('rzp-button1').innerHTML = '<i class="fas fa-lock mr-2"></i>Pay with Razorpay';
+    alert('Payment failed or was cancelled. Please try again.');
+  }
+</script>
+
+{% endblock content %}
