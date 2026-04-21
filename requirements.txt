@@ -6,3 +6,4 @@ sqlparse==0.4.1
 gunicorn==23.0.0
 whitenoise==6.9.0
 django-jazzmin==2.6.0
+razorpay
